@@ -1,0 +1,1 @@
+Put "How to play"text there
