@@ -1,0 +1,38 @@
+import random
+import time
+
+print("=== TEXT CAR RACING ===")
+car_pos = 2
+score = 0
+
+for i in range(10):
+    road = ["-", "-", "-"]
+    road[car_pos] = "C"
+    
+    obstacle_pos = random.randint(0, 2)
+    if i == 0:
+        obstacle_pos = -1
+    
+    if obstacle_pos != car_pos and obstacle_pos != -1:
+        road[obstacle_pos] = "X"
+    
+    print("".join(road))
+    
+    if car_pos == obstacle_pos:
+        print("CRASH! Game over")
+        print(f"Final score: {score}")
+        break
+    
+    score = score + 10
+    print(f"Score: {score}")
+    
+    move = input("Move l/r or Enter: ").lower()
+    if move == "l" and car_pos > 0:
+        car_pos = car_pos - 1
+    elif move == "r" and car_pos < 2:
+        car_pos = car_pos + 1
+    
+    time.sleep(0.5)
+
+print("Thanks for playing!")
+input("Press Enter to exit")
