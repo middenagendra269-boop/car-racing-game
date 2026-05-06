@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InstaLite</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #000;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+ .header {
+      background: #000;
+      border-bottom: 1px solid #262626;
+      padding: 12px 16px;
+      position: sticky;
+      top: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 5;
+    }
+ .logo { font-size: 24px; font-weight: bold; }
+ .upload-btn {
+      background: #0095f6;
+      border: none;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+ .post {
+      border-bottom: 1px solid #262626;
+      margin-bottom: 12px;
+    }
+ .post-header {
+      display: flex;
+      align-items: center;
+      padding: 12px;
+      gap: 10px;
+    }
+ .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    }
+ .username { font-weight: 600; font-size: 14px; }
+ .post-img { width: 100%; display: block; max-height: 500px; object-fit: cover; }
+ .post-actions {
+      padding: 8px 12px;
+      font-size: 24px;
+    }
+ .like-btn { cursor: pointer; user-select: none; }
+ .liked { color: #ed4956; }
+ .likes { padding: 0 12px; font-weight: 600; font-size: 14px; }
+ .caption { padding: 4px 12px 12px; font-size: 14px; }
+ .caption span { font-weight: 600; margin-right: 5px; }
+   #uploadModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 100;
+      padding: 20px;
+    }
+ .modal-content {
+      background: #262626;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 50px;
+    }
+    input, textarea {
+      width: 100%;
+      background: #000;
+      border: 1px solid #363636;
+      color: white;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-family: inherit;
+    }
+ .modal-btns { display: flex; gap: 10px; margin-top: 10px; }
+ .modal-btns button { flex: 1; padding: 10px; border-radius: 6px; border: none; color: white; font-weight: 600; }
+ .back { color: #0095f6; text-decoration: none; font-size: 14px; padding: 12px; display: block; }
+ .empty { text-align: center; color: #888; padding: 60px 20px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">InstaLite</div>
+    <button class="upload-btn" onclick="openUpload()">+</button>
+  </div>
+
+  <a href="index.html" class="back">← Back to Portfolio</a>
+  <div id="feed"></div>
+
+  <div id="uploadModal">
+    <div class="modal-content">
+      <h3>New Post</h3>
+      <input type="file" id="imgInput" accept="image/*">
+      <textarea id="captionInput" placeholder="Write a caption..." rows="3"></textarea>
+      <div class="modal-btns">
+        <button class="upload-btn" onclick="createPost()">Share</button>
+        <button onclick="closeUpload()" style="background:#363636">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let posts = JSON.parse(localStorage.getItem('instalite_posts')) || [];
+
+    function renderFeed() {
+      const feed = document.getElementById('feed');
+      if (posts.length === 0) {
+        feed.innerHTML = '<div class="empty">No posts yet<br>Click + to add your first photo</div>';
+        return;
+      }
+      feed.innerHTML = '';
+      posts.forEach((post, i) => {
+        feed.innerHTML += `
+          <div class="post">
+            <div class="post-header">
+              <div class="avatar"></div>
+              <div class="username">nagendra_dev</div>
+            </div>
+            <img src="${post.img}" class="post-img">
+            <div class="post-actions">
+              <span class="like-btn ${post.liked? 'liked' : ''}" onclick="toggleLike(${i})">
+                ${post.liked? '❤️' : '🤍'}
+              </span>
+            </div>
+            <div class="likes">${post.likes} likes</div>
+            <div class="caption"><span>nagendra_dev</span>${post.caption}</div>
+          </div>
+        `;
+      });
+    }
+
+    function toggleLike(index) {
+      posts[index].liked =!posts[index].liked;
+      posts[index].likes += posts[index].liked? 1 : -1;
+      savePosts();
+      renderFeed();
+    }
+
+    function openUpload() {
+      document.getElementById('uploadModal').style.display = 'block';
+    }
+
+    function closeUpload() {
+      document.getElementById('uploadModal').style.display = 'none';
+      document.getElementById('imgInput').value = '';
+      document.getElementById('captionInput').value = '';
+    }
+
+    function createPost() {
+      const fileInput = document.getElementById('imgInput');
+      const caption = document.getElementById('captionInput').value;
+      if (!fileInput.files[0]) { alert('Select an image'); return; }
+      const reader = new FileReader();
+      reader.onload = e => {
+        posts.unshift({
+          img: e.target.result,
+          caption: caption,
+          likes: 0,
+          liked: false,
+          time: Date.now()
+        });
+        savePosts();
+        renderFeed();
+        closeUpload();
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+
+    function savePosts() {
+      localStorage.setItem('instalite_posts', JSON.stringify(posts));
+    }
+
+    renderFeed();
+  </script>
+</body>
+</html>
